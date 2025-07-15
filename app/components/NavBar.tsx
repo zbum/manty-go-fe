@@ -3,9 +3,22 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Menu } from '@headlessui/react';
+import dynamic from "next/dynamic";
+
+const LoginModal = dynamic(() => import("./LoginModal"), { ssr: false });
 
 export default function NavBar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedId = localStorage.getItem('userId');
+      if (savedId) setUserId(savedId);
+    }
+  }, []);
+
   return (
     <nav className="w-full border-b border-b-[#032D78] bg-[#032D78] text-[15px]">
       <div className="w-full flex items-center gap-6 px-4 py-3 justify-between relative">
@@ -62,7 +75,11 @@ export default function NavBar() {
         </div>
         {/* 우측 로그인/관리 메뉴 (PC) */}
         <div className="hidden md:flex items-center gap-4 ml-auto">
-          <Link href="/login" className="text-white hover:text-blue-200 font-semibold">로그인</Link>
+          {userId ? (
+            <span className="text-white font-semibold">{userId}</span>
+          ) : (
+            <button onClick={() => setLoginOpen(true)} className="text-white hover:text-blue-200 font-semibold">로그인</button>
+          )}
           <Link href="/admin" className="text-white hover:text-blue-200 font-semibold">관리</Link>
         </div>
         {/* 모바일 메뉴 오버레이 */}
@@ -91,12 +108,21 @@ export default function NavBar() {
                 </details>
               </div>
               <div className="mt-8 flex flex-col gap-2 border-t border-white/20 pt-4">
-                <Link href="/login" className="text-white hover:text-blue-200 font-semibold">로그인</Link>
+                {userId ? (
+                  <span className="text-white font-semibold text-left">{userId}</span>
+                ) : (
+                  <button onClick={() => setLoginOpen(true)} className="text-white hover:text-blue-200 font-semibold text-left">로그인</button>
+                )}
                 <Link href="/admin" className="text-white hover:text-blue-200 font-semibold">관리</Link>
               </div>
             </div>
           </div>
         )}
+      {loginOpen && <LoginModal onClose={() => setLoginOpen(false)} onLogin={id => {
+        setUserId(id);
+        if (typeof window !== 'undefined') localStorage.setItem('userId', id);
+        setLoginOpen(false);
+      }} />}
       </div>
     </nav>
   );
